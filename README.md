@@ -10,12 +10,14 @@ In order to use this action, you need to:
 
 1. [Register new GitHub App](https://docs.github.com/apps/creating-github-apps/setting-up-a-github-app/creating-a-github-app).
 2. [Store the App's ID or Client ID in your repository environment variables](https://docs.github.com/actions/learn-github-actions/variables#defining-configuration-variables-for-multiple-workflows) (example: `APP_ID`).
-3. [Store the App's private key in your repository secrets](https://docs.github.com/actions/security-guides/encrypted-secrets?tool=webui#creating-encrypted-secrets-for-a-repository) (example: `PRIVATE_KEY`).
+3. Choose one of the following authentication methods:
+   - **Private Key (traditional)**: [Store the App's private key in your repository secrets](https://docs.github.com/actions/security-guides/encrypted-secrets?tool=webui#creating-encrypted-secrets-for-a-repository) (example: `PRIVATE_KEY`).
+   - **AWS KMS (recommended for enhanced security)**: Store the App's private key in AWS KMS and provide the KMS key ARN to the action.
 
 > [!IMPORTANT]  
 > An installation access token expires after 1 hour. Please [see this comment](https://github.com/actions/create-github-app-token/issues/121#issuecomment-2043214796) for alternative approaches if you have long-running processes.
 
-### Create a token for the current repository
+### Create a token for the current repository (using private key)
 
 ```yaml
 name: Run tests on staging
@@ -33,6 +35,36 @@ jobs:
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.PRIVATE_KEY }}
+      - uses: ./actions/staging-tests
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+```
+
+### Create a token for the current repository (using AWS KMS)
+
+```yaml
+name: Run tests on staging
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  hello-world:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for AWS OIDC authentication
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/GitHubActionsRole
+          aws-region: us-east-1
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          aws-kms-arn: ${{ vars.AWS_KMS_KEY_ARN }}
       - uses: ./actions/staging-tests
         with:
           token: ${{ steps.app-token.outputs.token }}
@@ -304,7 +336,7 @@ jobs:
 
 ### `private-key`
 
-**Required:** GitHub App private key. Escaped newlines (`\\n`) will be automatically replaced with actual newlines.
+**Optional (Required if `aws-kms-arn` is not provided):** GitHub App private key. Escaped newlines (`\\n`) will be automatically replaced with actual newlines.
 
 Some other actions may require the private key to be Base64 encoded. To avoid recreating a new secret, it can be decoded on the fly, but it needs to be managed securely. Here is an example of how this can be achieved:
 
@@ -323,6 +355,35 @@ steps:
       app-id: ${{ vars.APP_ID }}
       private-key: ${{ steps.decode.outputs.private-key }}
 ```
+
+### `aws-kms-arn`
+
+**Optional (Required if `private-key` is not provided):** AWS KMS key ARN for signing JWT tokens. When using this option, the GitHub App's private key should be stored in AWS KMS. The action will use KMS to sign authentication tokens instead of requiring direct access to the private key.
+
+**Prerequisites for AWS KMS usage:**
+- The GitHub App's private key must be imported into AWS KMS as an RSA_2048 key
+- The KMS key must be configured to allow the `kms:Sign` permission
+- AWS credentials must be configured before running this action (e.g., using `aws-actions/configure-aws-credentials`)
+- The KMS key must support the `RSASSA_PKCS1_V1_5_SHA256` signing algorithm
+
+**Example KMS key setup:**
+```bash
+# Import the GitHub App private key to KMS
+aws kms import-key-material \
+  --key-id <key-id> \
+  --import-token <token> \
+  --encrypted-key-material <encrypted-material>
+
+# Grant sign permission to your IAM role
+aws kms create-grant \
+  --key-id <key-arn> \
+  --grantee-principal <role-arn> \
+  --operations Sign
+```
+
+### `aws-profile`
+
+**Optional:** AWS profile to use for KMS signing. If not specified, the default AWS credentials will be used.
 
 ### `owner`
 

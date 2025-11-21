@@ -9,8 +9,14 @@ inputs:
     description: "GitHub App ID"
     required: true
   private-key:
-    description: "GitHub App private key"
-    required: true
+    description: "GitHub App private key (required if aws-kms-arn is not provided)"
+    required: false
+  aws-kms-arn:
+    description: "AWS KMS key ARN for signing JWT tokens (required if private-key is not provided)"
+    required: false
+  aws-profile:
+    description: "AWS profile to use for KMS signing (optional)"
+    required: false
   owner:
     description: "The owner of the GitHub App installation (defaults to current repository owner)"
     required: false
