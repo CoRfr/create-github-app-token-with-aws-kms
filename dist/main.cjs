@@ -68243,23 +68243,11 @@ async function createKmsSignedJwt(appId2, sign) {
     typ: "JWT",
     alg: "RS256"
   };
-  const headerJson = JSON.stringify(header).replace(/\s/g, "");
-  const payloadJson = JSON.stringify(payload2).replace(/\s/g, "");
-  const encodedHeader = Buffer.from(headerJson).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-  const encodedPayload = Buffer.from(payloadJson).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  const encodedHeader = Buffer.from(JSON.stringify(header).replace(/\s/g, "")).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  const encodedPayload = Buffer.from(JSON.stringify(payload2).replace(/\s/g, "")).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   const signatureInput = `${encodedHeader}.${encodedPayload}`;
   const signature = await sign(signatureInput);
-  const jwt = `${signatureInput}.${signature}`;
-  if (process.env.ACTIONS_STEP_DEBUG === "true" || process.env.RUNNER_DEBUG === "1") {
-    console.log("::debug::JWT Header JSON: %s", headerJson);
-    console.log("::debug::JWT Payload JSON: %s", payloadJson);
-    console.log("::debug::JWT Header (base64url): %s", encodedHeader);
-    console.log("::debug::JWT Payload (base64url): %s", encodedPayload);
-    console.log("::debug::JWT Signature Input: %s", signatureInput);
-    console.log("::debug::JWT Signature (base64url): %s", signature);
-    console.log("::debug::Complete JWT: %s", jwt);
-  }
-  return jwt;
+  return `${signatureInput}.${signature}`;
 }
 function createKmsAppAuth({ appId: appId2, kmsKeyArn, awsProfile: awsProfile2, request: request2 }) {
   const sign = createKmsSigner(kmsKeyArn, awsProfile2);
