@@ -68226,7 +68226,8 @@ async function createKmsSignedJwt(appId2, sign) {
     // issued at time, 60 seconds in the past to allow for clock drift
     exp: now + 600,
     // expires in 10 minutes
-    iss: appId2
+    iss: Number(appId2)
+    // Convert to number to match Python implementation
   };
   const header = {
     typ: "JWT",
