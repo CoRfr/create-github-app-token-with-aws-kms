@@ -9,12 +9,12 @@ GitHub Action for creating a GitHub App installation access token.
 In order to use this action, you need to:
 
 1. [Register new GitHub App](https://docs.github.com/apps/creating-github-apps/setting-up-a-github-app/creating-a-github-app).
-2. [Store the App's ID or Client ID in your repository environment variables](https://docs.github.com/actions/learn-github-actions/variables#defining-configuration-variables-for-multiple-workflows) (example: `APP_ID`).
+2. [Store the App's Client ID in your repository variables](https://docs.github.com/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables#defining-configuration-variables-for-multiple-workflows) (example: `APP_CLIENT_ID`).
 3. Choose one of the following authentication methods:
-   - **Private Key (traditional)**: [Store the App's private key in your repository secrets](https://docs.github.com/actions/security-guides/encrypted-secrets?tool=webui#creating-encrypted-secrets-for-a-repository) (example: `PRIVATE_KEY`).
+   - **Private Key (traditional)**: [Store the App's private key in your repository secrets](https://docs.github.com/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets?tool=webui#creating-secrets-for-a-repository) (example: `APP_PRIVATE_KEY`).
    - **AWS KMS (recommended for enhanced security)**: Store the App's private key in AWS KMS and provide the KMS key ARN to the action.
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > An installation access token expires after 1 hour. Please [see this comment](https://github.com/actions/create-github-app-token/issues/121#issuecomment-2043214796) for alternative approaches if you have long-running processes.
 
 ### Create a token for the current repository (using private key)
@@ -30,11 +30,11 @@ jobs:
   hello-world:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - uses: ./actions/staging-tests
         with:
           token: ${{ steps.app-token.outputs.token }}
@@ -79,19 +79,19 @@ jobs:
   auto-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           # required
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
-      - uses: actions/checkout@v4
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      - uses: actions/checkout@v6
         with:
           token: ${{ steps.app-token.outputs.token }}
           ref: ${{ github.head_ref }}
           # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
           persist-credentials: false
-      - uses: creyD/prettier_action@v4.3
+      - uses: creyD/prettier_action@v6
         with:
           github_token: ${{ steps.app-token.outputs.token }}
 ```
@@ -105,12 +105,12 @@ jobs:
   auto-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           # required
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Get GitHub App User ID
         id: get-user-id
         run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
@@ -130,12 +130,12 @@ jobs:
   auto-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
           # required
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Get GitHub App User ID
         id: get-user-id
         run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
@@ -167,13 +167,13 @@ jobs:
   hello-world:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-      - uses: peter-evans/create-or-update-comment@v3
+      - uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
           issue-number: ${{ github.event.issue.number }}
@@ -189,16 +189,16 @@ jobs:
   hello-world:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: |
             repo1
             repo2
-      - uses: peter-evans/create-or-update-comment@v3
+      - uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
           issue-number: ${{ github.event.issue.number }}
@@ -214,13 +214,13 @@ jobs:
   hello-world:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: another-owner
-      - uses: peter-evans/create-or-update-comment@v3
+      - uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
           issue-number: ${{ github.event.issue.number }}
@@ -239,14 +239,14 @@ jobs:
   hello-world:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           permission-issues: write
-      - uses: peter-evans/create-or-update-comment@v3
+      - uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
           issue-number: ${{ github.event.issue.number }}
@@ -281,11 +281,11 @@ jobs:
         owners-and-repos: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
 
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app-token
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ matrix.owners-and-repos.owner }}
           repositories: ${{ join(matrix.owners-and-repos.repos) }}
       - uses: octokit/request-action@v2.x
@@ -311,9 +311,9 @@ jobs:
     steps:
       - name: Create GitHub App token
         id: create_token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.GHES_APP_ID }}
+          client-id: ${{ vars.GHES_APP_CLIENT_ID }}
           private-key: ${{ secrets.GHES_APP_PRIVATE_KEY }}
           owner: ${{ vars.GHES_INSTALLATION_ORG }}
           github-api-url: ${{ vars.GITHUB_API_URL }}
@@ -328,11 +328,32 @@ jobs:
           GITHUB_TOKEN: ${{ steps.create_token.outputs.token }}
 ```
 
+### Proxy support
+
+This action relies on Node.js native proxy support.
+
+If you set `HTTP_PROXY` or `HTTPS_PROXY`, also set `NODE_USE_ENV_PROXY: "1"` on the action step so Node.js honors those variables. If you need proxy bypass rules, set `NO_PROXY` alongside them.
+
+```yaml
+- uses: actions/create-github-app-token@v3
+  id: app-token
+  env:
+    HTTPS_PROXY: http://proxy.example.com:8080
+    NO_PROXY: github.example.com
+    NODE_USE_ENV_PROXY: "1"
+  with:
+    client-id: ${{ vars.APP_CLIENT_ID }}
+    private-key: ${{ secrets.APP_PRIVATE_KEY }}
+```
+
 ## Inputs
 
-### `app-id`
+### `client-id` or `app-id`
 
-**Required:** GitHub App ID.
+**Required:** GitHub App Client ID.
+
+> [!NOTE]
+> The legacy `app-id` input is also accepted, but `client-id` is recommended.
 
 ### `private-key`
 
@@ -345,14 +366,14 @@ steps:
   - name: Decode the GitHub App Private Key
     id: decode
     run: |
-      private_key=$(echo "${{ secrets.PRIVATE_KEY }}" | base64 -d | awk 'BEGIN {ORS="\\n"} {print}' | head -c -2) &> /dev/null
+      private_key=$(echo "${{ secrets.APP_PRIVATE_KEY }}" | base64 -d | awk 'BEGIN {ORS="\\n"} {print}' | head -c -2) &> /dev/null
       echo "::add-mask::$private_key"
       echo "private-key=$private_key" >> "$GITHUB_OUTPUT"
   - name: Generate GitHub App Token
     id: app-token
-    uses: actions/create-github-app-token@v2
+    uses: actions/create-github-app-token@v3
     with:
-      app-id: ${{ vars.APP_ID }}
+      client-id: ${{ vars.APP_CLIENT_ID }}
       private-key: ${{ steps.decode.outputs.private-key }}
 ```
 
